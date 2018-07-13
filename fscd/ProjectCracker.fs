@@ -82,14 +82,14 @@ type private ProjectParsingSdk =
 type ParsedProject = string * FSharpProjectOptions * ((string * string) list)
 type ParsedProjectCache = ConcurrentDictionary<string, ParsedProject>
 
-let chooseByPrefix prefix (s: string) =
+let chooseByPrefix (prefix:string) (s: string) =
     if s.StartsWith(prefix) then Some (s.Substring(prefix.Length))
     else None
 let chooseByPrefix2 prefixes (s: string) =
     prefixes
     |> List.tryPick (fun prefix -> chooseByPrefix prefix s)
 
-let splitByPrefix prefix (s: string) =
+let splitByPrefix (prefix:string) (s: string) =
     if s.StartsWith(prefix) then Some (prefix, s.Substring(prefix.Length))
     else None
 
@@ -106,7 +106,7 @@ let outType rsp =
 
 let private outputFileArg = ["--out:"; "-o:"]
 
-let private makeAbs projDir f =
+let private makeAbs projDir (f:string) =
       if Path.IsPathRooted f then f else Path.Combine(projDir, f)
 
 let outputFile projDir rsp =
@@ -184,23 +184,13 @@ let getExtraInfo targetPath props =
 
 let (|MsbuildOk|_|) x =
     match x with
-#if NETSTANDARD2_0
     | Ok x -> Some x
     | Error _ -> None
-#else
-    | Choice1Of2 x -> Some x
-    | Choice2Of2 _ -> None
-#endif
 
 let (|MsbuildError|_|) x =
     match x with
-#if NETSTANDARD2_0
     | Ok _ -> None
     | Error x -> Some x
-#else
-    | Choice1Of2 _ -> None
-    | Choice2Of2 x -> Some x
-#endif
 
 let runProcess (log: string -> unit) (workingDir: string) (exePath: string) (args: string) =
     let psi = System.Diagnostics.ProcessStartInfo()
@@ -233,7 +223,7 @@ let runProcess (log: string -> unit) (workingDir: string) (exePath: string) (arg
 
 let private getProjectOptionsFromProjectFile (cache: ParsedProjectCache) parseAsSdk (file : string) =
 
-    let rec projInfoOf additionalMSBuildProps file : ParsedProject =
+    let rec projInfoOf additionalMSBuildProps (file:string) : ParsedProject =
         let projDir = Path.GetDirectoryName file
 
         //notifyState (WorkspaceProjectState.Loading file)
